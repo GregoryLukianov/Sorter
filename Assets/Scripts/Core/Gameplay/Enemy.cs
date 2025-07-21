@@ -1,47 +1,61 @@
 ﻿using System;
 using System.Collections;
+using Core.Events;
+using Core.Events.Handlers;
 using Shapes.Factories.Base;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+
+using Zenject;
 
 namespace Core.Gameplay
 {
     public class Enemy: MonoBehaviour, IProduct<Enemy>, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         [SerializeField] private Rigidbody2D _rigidbody;
-        
-        private EnemyType _enemyType;
+        [Inject] private EventBus _eventBus;
+
+        public EnemyType Type { get; private set; }
         private float _speed;
-        private Vector2 _target;
-        private Coroutine _returningRoutine;
+        private Vector2 _endPoint;
+        private Coroutine _movingRoutine;
         private Vector3 _returningTargetPosition;
+        private bool _isActingFinalMove;
         
         public bool IsDragging { get; private set; }
-        public bool IsReturningToPath { get; private set; }
+        public bool IsGrabbed;
+        public bool IsMovingToTarget { get; private set; }
         public bool IsInitialized { get; private set; }
+        public Rigidbody2D Rigidbody => _rigidbody;
+
+        public event Action<Enemy> onEnemyDrag;
 
 
         public void Initialize(EnemyType enemyType, float speed, Vector2 target)
         {
-            _enemyType = enemyType;
+            Type = enemyType;
             _speed = speed;
-            _target = target;
+            _endPoint = target;
             IsInitialized = true;
         }
 
         private void Update()
         {
-            if(!IsInitialized)
+            if(!IsInitialized || IsDragging || IsMovingToTarget)
                 return;
-            
-            if(transform.position.x > _target.x)
+
+            if (transform.position.x > _endPoint.x)
+            {
                 Destroy(gameObject);
+                _eventBus.RaiseEvent<IHealthPointsHandler>(h=>h.GetDamage());
+            }
+                
         }
         
         private void FixedUpdate() 
         {
-            if(!IsInitialized || IsReturningToPath)
+            if(!IsInitialized || IsMovingToTarget)
                 return;
             
             if (!IsDragging) {
@@ -49,22 +63,36 @@ namespace Core.Gameplay
             }
         }
 
-        private IEnumerator Returning()
+        public void MoveToTarget(Vector2 target, bool isFinalMove = false)
         {
-            IsReturningToPath = true;
+            _isActingFinalMove = isFinalMove;
+            _movingRoutine = StartCoroutine(MovingToTarget(target, isFinalMove));
+        }
+        
+
+        private IEnumerator MovingToTarget(Vector2 target, bool isFinalMove = false )
+        {
+            IsMovingToTarget = true;
             
-            while (Vector2.Distance(_rigidbody.position, _returningTargetPosition) > 0.01f)
+            while (Vector2.Distance(_rigidbody.position, target) > 0.01f)
             {
-                Vector2 newPos = Vector2.Lerp(_rigidbody.position, _returningTargetPosition, 0.025f);
+                Vector2 newPos = Vector2.Lerp(_rigidbody.position, target, 0.05f);
                 _rigidbody.MovePosition(newPos);
                 yield return null;
             }
             
-            _rigidbody.MovePosition(_returningTargetPosition);
-            IsReturningToPath = false;
+            _rigidbody.MovePosition(target);
+            IsMovingToTarget = false;
+            
             
             _rigidbody.constraints = RigidbodyConstraints2D.FreezePositionY;
             _rigidbody.bodyType = RigidbodyType2D.Dynamic;
+            
+            if(!isFinalMove)
+                yield break;
+
+            Destroy(gameObject);
+            _eventBus.RaiseEvent<IScoreHandler>(h=>h.AddScore());
         }
         
 
@@ -72,26 +100,46 @@ namespace Core.Gameplay
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if(IsReturningToPath)
+            if(IsMovingToTarget)
                 return;
             
-            IsDragging = true;
             _returningTargetPosition = transform.position;
             _rigidbody.constraints = RigidbodyConstraints2D.None;
-            _rigidbody.bodyType = RigidbodyType2D.Static;
+            _rigidbody.bodyType = RigidbodyType2D.Kinematic;
+            _rigidbody.linearVelocity = Vector2.zero;
+            IsDragging = true;
         }
         
         public void OnDrag(PointerEventData eventData)
         {
+            if(IsMovingToTarget)
+                return;
+            
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
             mousePos.z = 0;
             _rigidbody.MovePosition(mousePos);
         }
-        
+
+        public void OnDestroy()
+        {
+            
+        }
+
         public void OnPointerUp(PointerEventData eventData)
         {
+            if(_isActingFinalMove)
+                return;
+            
             IsDragging = false;
-            _returningRoutine = StartCoroutine(Returning());
+            if (_movingRoutine != null)
+            {
+                StopCoroutine(_movingRoutine);
+                _rigidbody.constraints = RigidbodyConstraints2D.None;
+                _rigidbody.bodyType = RigidbodyType2D.Kinematic;
+                _rigidbody.linearVelocity = Vector2.zero;
+                MoveToTarget(_returningTargetPosition);
+            }else
+                MoveToTarget(_returningTargetPosition);
         }
 
         #endregion

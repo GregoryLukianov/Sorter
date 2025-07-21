@@ -7,13 +7,13 @@ namespace Core.Events
 {
     public class EventBus
     {
-        private static Dictionary<Type, SubscribersList<IGlobalSubscriber>> s_Subscribers
+        private Dictionary<Type, SubscribersList<IGlobalSubscriber>> s_Subscribers
             = new Dictionary<Type, SubscribersList<IGlobalSubscriber>>();
 
         private static Dictionary<Type, List<Type>> s_CachedSubscriberTypes
             = new Dictionary<Type, List<Type>>();
 
-        public static void Subscribe(IGlobalSubscriber subscriber)
+        public void Subscribe(IGlobalSubscriber subscriber)
         {
             List<Type> subscriberTypes = GetSubscriberTypes(subscriber.GetType());
             foreach (Type t in subscriberTypes)
@@ -24,7 +24,7 @@ namespace Core.Events
             }
         }
 
-        public static void Unsubscribe(IGlobalSubscriber subscriber)
+        public void Unsubscribe(IGlobalSubscriber subscriber)
         {
             List<Type> subscriberTypes = GetSubscriberTypes(subscriber.GetType());
             foreach (Type t in subscriberTypes)
@@ -34,7 +34,7 @@ namespace Core.Events
             }
         }
 
-        public static void RaiseEvent<TSubscriber>(Action<TSubscriber> action)
+        public void RaiseEvent<TSubscriber>(Action<TSubscriber> action)
             where TSubscriber : class, IGlobalSubscriber
         {
             if (!s_Subscribers.ContainsKey(typeof(TSubscriber)))
@@ -59,7 +59,7 @@ namespace Core.Events
             subscribers.Cleanup();
         }
 
-        private static List<Type> GetSubscriberTypes(Type type)
+        private List<Type> GetSubscriberTypes(Type type)
         {
             if (s_CachedSubscriberTypes.ContainsKey(type))
                 return s_CachedSubscriberTypes[type];
