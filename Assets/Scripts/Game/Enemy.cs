@@ -2,10 +2,8 @@
 using System.Collections;
 using Events.Handlers;
 using Factory;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Zenject;
 using EventBus = Events.EventBus;
 
 namespace Game

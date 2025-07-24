@@ -1,5 +1,4 @@
-﻿using System;
-using Events;
+﻿using Events;
 using Events.Handlers;
 using UnityEngine;
 using Zenject;

@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using Events;
-using Events.Handlers;
-using TMPro;
+﻿using Events.Handlers;
 using UnityEngine;
 using UnityEngine.UI;
-using Zenject;
 
 namespace UI
 {

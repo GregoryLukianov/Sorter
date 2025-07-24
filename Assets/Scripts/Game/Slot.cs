@@ -7,8 +7,9 @@ namespace Game
 {
     public class Slot : MonoBehaviour
     {
+        [SerializeField] private EnemyType _requiredShape;
+        
         private Coroutine _locatorRoutine;
-        public EnemyType requiredShape;
 
         [Inject] private EventBus _eventBus;
         
@@ -19,7 +20,7 @@ namespace Game
             if(!enemy)
                 return;
 
-            if (enemy.Type == requiredShape)
+            if (enemy.Type == _requiredShape)
                 enemy.MoveToTarget(transform.position, true);
             else
             {

@@ -1,9 +1,4 @@
-﻿using Events;
-using Events.Handlers;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using Zenject;
+﻿using Events.Handlers;
 
 namespace UI
 {
