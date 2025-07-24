@@ -2,6 +2,7 @@
 using System.Collections;
 using Events.Handlers;
 using Factory;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Zenject;
@@ -9,10 +10,13 @@ using EventBus = Events.EventBus;
 
 namespace Game
 {
-    public class Enemy: MonoBehaviour, IProduct<Enemy>, IPointerDownHandler, IDragHandler, IPointerUpHandler
+    public class Enemy: MonoBehaviour, IProduct<Enemy>, IPointerDownHandler, IDragHandler, IPointerUpHandler, IGameOverHandler, IVictoryHandler
     {
         [SerializeField] private Rigidbody2D _rigidbody;
-        [Inject] private EventBus _eventBus;
+        [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private ParticleSystem _explosionParticleSystem;
+        [SerializeField] private ParticleSystem _collectParticleSystem;
+        private EventBus _eventBus;
 
         public EnemyType Type { get; private set; }
         private float _speed;
@@ -20,6 +24,7 @@ namespace Game
         private Coroutine _movingRoutine;
         private Vector3 _returningTargetPosition;
         private bool _isActingFinalMove;
+        private bool _isAlive;
         
         public bool IsDragging { get; private set; }
         public bool IsGrabbed;
@@ -30,8 +35,11 @@ namespace Game
         public event Action<Enemy> onEnemyDrag;
 
 
-        public void Initialize(EnemyType enemyType, float speed, Vector2 target)
+        public void Initialize(EnemyType enemyType, float speed, Vector2 target, EventBus eventBus)
         {
+            _isAlive = true;
+            _eventBus = eventBus;
+            _eventBus.Subscribe(this);
             Type = enemyType;
             _speed = speed;
             _endPoint = target;
@@ -43,10 +51,11 @@ namespace Game
             if(!IsInitialized || IsDragging || IsMovingToTarget)
                 return;
 
-            if (transform.position.x > _endPoint.x)
+            if (transform.position.x > _endPoint.x && _isAlive)
             {
-                Destroy(gameObject);
+                Explode();
                 _eventBus.RaiseEvent<IGetDamageHandler>(h=>h.HandleGetDamage());
+                _isAlive = false;
             }
                 
         }
@@ -61,8 +70,18 @@ namespace Game
             }
         }
 
+        public void Explode()
+        {
+            ParticleSystem particleInstance = Instantiate(_explosionParticleSystem, 
+                transform.position+ new Vector3(0,0,-2), Quaternion.identity);
+            particleInstance.Play();
+            Destroy(particleInstance.gameObject, particleInstance.main.duration);
+            Destroy(gameObject);
+        }
+
         private void OnDestroy()
         {
+            _eventBus.Unsubscribe(this);
             _eventBus.RaiseEvent<IEnemyDeathHandler>(h=>h.HandleEnemyDeath());
         }
 
@@ -94,8 +113,13 @@ namespace Game
             if(!isFinalMove)
                 yield break;
 
-            Destroy(gameObject);
+            _spriteRenderer.gameObject.SetActive(false);
+            ParticleSystem particleInstance = Instantiate(_collectParticleSystem, 
+                transform.position+ new Vector3(0,0,-2), Quaternion.identity);
+            particleInstance.Play();
+            Destroy(particleInstance.gameObject, particleInstance.main.duration);
             _eventBus.RaiseEvent<IAddScoreHandler>(h=>h.HandleAddScore());
+            Destroy(gameObject);
         }
         
 
@@ -141,5 +165,15 @@ namespace Game
         }
 
         #endregion
+
+        public void HandleGameOver()
+        {
+            Destroy(gameObject);
+        }
+
+        public void HandleVictory(int score)
+        {
+            Destroy(gameObject);
+        }
     }
 }

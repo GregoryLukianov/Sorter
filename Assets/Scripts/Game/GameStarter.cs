@@ -26,15 +26,5 @@ namespace Game
             CurrentGameplaySession.Init(_paths);
             CurrentGameplaySession.StartGameplaySession();
         }
-
-        public void HandleGameOver()
-        {
-            
-        }
-
-        public void HandleWin(int score)
-        {
-            
-        }
     }
 }

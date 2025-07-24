@@ -2,6 +2,6 @@
 {
     public interface IHealthPointsChangeHandler: IGlobalSubscriber
     {
-        public void HandleHealthPointsChange(int healthPointsLeft);
+        public void HandleHealthPointsChange(int healthPointsLeft, int healthPoints);
     }
 }

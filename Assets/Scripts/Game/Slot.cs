@@ -23,7 +23,7 @@ namespace Game
                 enemy.MoveToTarget(transform.position, true);
             else
             {
-                Destroy(enemy.gameObject);
+                enemy.Explode();
                 _eventBus.RaiseEvent<IGetDamageHandler>(h=>h.HandleGetDamage());
             }
         }

@@ -2,13 +2,14 @@
 using Events.Handlers;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Zenject;
 
 namespace UI
 {
     public class ScoreUI: MonoBehaviour, IScoreChangeHandler
     {
-        [SerializeField] private TextMeshProUGUI _scoreText;
+        [SerializeField] private Text _scoreText;
         [Inject] private EventBus _eventBus;
         
         private void Awake()

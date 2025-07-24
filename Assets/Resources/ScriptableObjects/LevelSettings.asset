@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c6b25cfbd014cf28196f57399f9d0e8, type: 3}
   m_Name: LevelSettings
   m_EditorClassIdentifier: 
-  NumberOfFigures: {x: 0, y: 20.72}
-  SpawnTime: {x: 1.49, y: 3.02}
-  EnemySpeed: {x: 0.54, y: 2.04}
-  HealthPoints: 100
+  NumberOfFigures: {x: 30, y: 50}
+  SpawnTime: {x: 0.23, y: 1.49}
+  EnemySpeed: {x: 0.54, y: 2.46}
+  HealthPoints: 5

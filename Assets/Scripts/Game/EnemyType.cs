@@ -2,9 +2,9 @@
 {
     public enum EnemyType
     {
-        Human,
-        Spider,
-        Goblin,
-        Zombie
+        Star,
+        Lock,
+        Zap,
+        Diamond
     }
 }

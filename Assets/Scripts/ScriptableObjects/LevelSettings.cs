@@ -9,7 +9,7 @@ namespace ScriptableObjects
         public float MinNumberOfFigures => NumberOfFigures.x;
         public float MaxNumberOfFigures => NumberOfFigures.y;
         
-        [MinMaxSlider(1, 5)] [SerializeField] private Vector2 SpawnTime;
+        [MinMaxSlider(0, 5)] [SerializeField] private Vector2 SpawnTime;
         public float MinSpawnTime => SpawnTime.x;
         public float MaxSpawnTime => SpawnTime.y;
         

@@ -25,7 +25,7 @@ namespace Game
         private int _numberOfEnemies;
         private int _numberOfEnemiesToSpawnLeft;
         private int _numberOfEnemiesAliveLeft;
-        private float _spawnTime;
+        private float _spawnTime => Random.Range(_settings.MinSpawnTime, _settings.MaxSpawnTime);
         private int _healthPoints;
         private int _healthPointsLeft;
         private int _score;
@@ -43,7 +43,7 @@ namespace Game
             
             InitializeValues();
             
-            _eventBus.RaiseEvent<IHealthPointsChangeHandler>(h => h.HandleHealthPointsChange(_healthPointsLeft));
+            _eventBus.RaiseEvent<IHealthPointsChangeHandler>(h => h.HandleHealthPointsChange(_healthPointsLeft, _healthPoints));
             _eventBus.RaiseEvent<IScoreChangeHandler>(h => h.HandleScoreChange(_score));
         }
 
@@ -66,8 +66,6 @@ namespace Game
             _numberOfEnemies = (int)Random.Range(_settings.MinNumberOfFigures, _settings.MaxNumberOfFigures);
             _numberOfEnemiesToSpawnLeft = _numberOfEnemies;
             _numberOfEnemiesAliveLeft = _numberOfEnemies;
-            
-            _spawnTime = Random.Range(_settings.MinSpawnTime, _settings.MaxSpawnTime);
 
             _healthPoints = _settings.HealthPoints;
             _healthPointsLeft = _healthPoints;
@@ -85,12 +83,11 @@ namespace Game
                     var enemySpeed = Random.Range(_settings.MinEnemySpeed, _settings.MaxEnemySpeed);
                     
                     var enemy = _enemiesFactory.Create(enemySo, path.transform, enemySpeed, path.StartPoint.position,
-                        path.EndPoint.position);
+                        path.EndPoint.position, _eventBus);
                     
                     _container.InjectGameObject(enemy.gameObject);
                     
                     _numberOfEnemiesToSpawnLeft -= 1;
-                    Debug.Log("enemies left" + _numberOfEnemiesToSpawnLeft);
                     await UniTask.Delay(System.TimeSpan.FromSeconds(_spawnTime), cancellationToken: token);
                 }
             }
@@ -102,14 +99,14 @@ namespace Game
         
         private void ChickenDinner()
         {
-            _eventBus.RaiseEvent<IGameplayHandler>(h=>h.HandleWin(_score));
+            _eventBus.RaiseEvent<IVictoryHandler>(h=>h.HandleVictory(_score));
             StopGameplay();
         }
 
         public void HandleGetDamage()
         {
             _healthPointsLeft -= 1;
-            _eventBus.RaiseEvent<IHealthPointsChangeHandler>(h => h.HandleHealthPointsChange(_healthPointsLeft));
+            _eventBus.RaiseEvent<IHealthPointsChangeHandler>(h => h.HandleHealthPointsChange(_healthPointsLeft, _healthPoints));
 
             if (_healthPointsLeft <= 0)
                 GameOver();
@@ -117,7 +114,7 @@ namespace Game
 
         private void GameOver()
         {
-            _eventBus.RaiseEvent<IGameplayHandler>(h=>h.HandleGameOver());
+            _eventBus.RaiseEvent<IGameOverHandler>(h=>h.HandleGameOver());
             StopGameplay();
         }
 
@@ -130,7 +127,6 @@ namespace Game
         public void HandleEnemyDeath()
         {
             _numberOfEnemiesAliveLeft -= 1;
-            Debug.Log("enemies left" + _numberOfEnemiesAliveLeft);
             
             if(_numberOfEnemiesAliveLeft>0)
                 return;

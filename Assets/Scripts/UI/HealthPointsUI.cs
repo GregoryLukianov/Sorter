@@ -2,13 +2,15 @@
 using Events.Handlers;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Zenject;
 
 namespace UI
 {
     public class HealthPointsUI: MonoBehaviour, IHealthPointsChangeHandler
     {
-        [SerializeField] private TextMeshProUGUI _healthPointsText;
+        [SerializeField] private Text _healthPointsText;
+        [SerializeField] private Image _filledBackgorund;
         [Inject] private EventBus _eventBus;
         
         
@@ -17,9 +19,10 @@ namespace UI
             _eventBus.Subscribe(this);
         }
         
-        public void HandleHealthPointsChange(int healthPointsLeft)
+        public void HandleHealthPointsChange(int healthPointsLeft, int healthPoints)
         {
             _healthPointsText.text = $"Health: {healthPointsLeft}";
+            _filledBackgorund.fillAmount = (float)healthPointsLeft / (float)healthPoints;
         }
     }
 }
