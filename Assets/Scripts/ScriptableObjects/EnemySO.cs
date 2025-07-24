@@ -1,4 +1,4 @@
-﻿using Core.Gameplay;
+﻿using Game;
 using UnityEngine;
 
 namespace ScriptableObjects
